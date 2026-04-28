@@ -42,7 +42,7 @@ Single-file mental wellness web app that runs fully in the browser.
 Open `mindflow.html` directly in browser, or run a local static server:
 
 ```bash
-cd /Users/shreyv/Projects/Mind_Helper
+cd ../Mind_Helper
 python3 -m http.server 8000
 ```
 
