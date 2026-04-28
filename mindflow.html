@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MindFlow — Understand Your Mind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080c14;
+    --surface: #0e1724;
+    --surface2: #141f30;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8edf5;
+    --muted: #7a8ba0;
+    --accent: #5b9cf6;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --rose: #f87171;
+    --glow: rgba(91,156,246,0.15);
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* ── BG BLOBS ── */
+  .blob {
+    position: fixed; border-radius: 50%; filter: blur(80px);
+    pointer-events: none; z-index: 0;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .blob1 { width: 350px; height: 350px; background: rgba(91,156,246,0.08); top: -80px; right: -60px; }
+  .blob2 { width: 280px; height: 280px; background: rgba(167,139,250,0.07); bottom: -60px; left: -40px; animation-delay: -6s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(20px,30px) scale(1.08); } }
+
+  /* ── SCREEN WRAPPER ── */
+  #app {
+    position: relative; z-index: 1;
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
+  }
+
+  .screen {
+    width: 100%; max-width: 420px;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 40px 28px;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .display { font-family: 'Playfair Display', serif; }
+  .italic  { font-style: italic; }
+
+  h1.brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem; font-weight: 700;
+    background: linear-gradient(135deg, #5b9cf6 0%, #a78bfa 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 1rem; color: var(--muted); letter-spacing: 0.02em;
+    margin-bottom: 48px; font-weight: 300;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px 28px;
+    width: 100%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 32px; border-radius: 14px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.01em;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #5b9cf6, #a78bfa);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(91,156,246,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(91,156,246,0.45); }
+  .btn-ghost {
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: #1a2840; transform: translateY(-1px); }
+  .btn-green  { background: linear-gradient(135deg, #059669, #34d399); color: #fff; box-shadow: 0 4px 20px rgba(52,211,153,0.25); }
+  .btn-green:hover { transform: translateY(-2px); }
+
+  /* ── LANDING ── */
+  .orb {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #5b9cf6, #a78bfa 60%, #7c3aed);
+    box-shadow: 0 0 60px rgba(91,156,246,0.4), 0 0 120px rgba(167,139,250,0.2);
+    margin-bottom: 32px;
+    animation: pulse-orb 3s ease-in-out infinite;
+    position: relative;
+  }
+  .orb::after {
+    content: '🧠';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem;
+  }
+  @keyframes pulse-orb {
+    0%, 100% { box-shadow: 0 0 60px rgba(91,156,246,0.4), 0 0 120px rgba(167,139,250,0.2); transform: scale(1); }
+    50%       { box-shadow: 0 0 80px rgba(91,156,246,0.6), 0 0 160px rgba(167,139,250,0.3); transform: scale(1.04); }
+  }
+
+  .badge {
+    display: inline-flex; gap: 6px; align-items: center;
+    background: rgba(91,156,246,0.1); border: 1px solid rgba(91,156,246,0.2);
+    color: var(--accent); border-radius: 30px;
+    padding: 5px 14px; font-size: 0.78rem; font-weight: 500;
+    margin-bottom: 20px; letter-spacing: 0.04em;
+  }
+
+  .landing-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 700;
+    line-height: 1.25; text-align: center;
+    color: var(--text); margin-bottom: 12px;
+  }
+  .landing-sub {
+    font-size: 0.92rem; color: var(--muted); text-align: center;
+    line-height: 1.6; margin-bottom: 36px; font-weight: 300;
+  }
+
+  .stat-row {
+    display: flex; gap: 12px; justify-content: center;
+    margin-bottom: 36px;
+  }
+  .stat-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 18px; text-align: center;
+    flex: 1;
+  }
+  .stat-num { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    width: 100%; margin-bottom: 24px;
+  }
+  .progress-meta {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .progress-track {
+    width: 100%; height: 4px; background: var(--surface2);
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #5b9cf6, #a78bfa);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px rgba(91,156,246,0.5);
+  }
+
+  /* ── QUESTION ── */
+  .q-number {
+    font-size: 0.78rem; color: var(--accent); font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem; line-height: 1.45;
+    color: var(--text); margin-bottom: 36px; min-height: 64px;
+  }
+
+  /* ── SCALE BUTTONS ── */
+  .scale-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.72rem; color: var(--muted); margin-bottom: 10px;
+  }
+  .scale-row {
+    display: flex; gap: 10px; justify-content: center; margin-bottom: 28px;
+  }
+  .scale-btn {
+    width: 52px; height: 52px; border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 500;
+    cursor: pointer; transition: all 0.18s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scale-btn:hover { border-color: var(--accent); background: rgba(91,156,246,0.1); transform: translateY(-3px); }
+  .scale-btn.selected {
+    background: linear-gradient(135deg, #5b9cf6, #a78bfa);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 4px 16px rgba(91,156,246,0.4); transform: scale(1.08);
+  }
+
+  .nav-row { display: flex; gap: 10px; width: 100%; }
+  .nav-row .btn { flex: 1; }
+
+  /* ── LOADING ── */
+  .loader-ring {
+    width: 72px; height: 72px; margin-bottom: 28px; position: relative;
+  }
+  .loader-ring svg { width: 100%; height: 100%; animation: spin 1.4s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem; color: var(--text); margin-bottom: 8px;
+  }
+  .loader-sub { font-size: 0.85rem; color: var(--muted); }
+  .dots span {
+    display: inline-block; animation: blink 1.4s ease-in-out infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+  /* ── RESULT ── */
+  .result-badge {
+    width: 110px; height: 110px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 2.8rem; margin-bottom: 20px;
+    animation: pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result-badge.relax  { background: radial-gradient(circle, rgba(52,211,153,0.18), rgba(52,211,153,0.04)); border: 2px solid rgba(52,211,153,0.3); }
+  .result-badge.vent   { background: radial-gradient(circle, rgba(251,191,36,0.18), rgba(251,191,36,0.04)); border: 2px solid rgba(251,191,36,0.3); }
+  .result-badge.direct { background: radial-gradient(circle, rgba(91,156,246,0.18), rgba(91,156,246,0.04)); border: 2px solid rgba(91,156,246,0.3); }
+
+  .result-mode {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem; font-weight: 700; margin-bottom: 10px;
+  }
+  .result-mode.relax  { color: var(--green); }
+  .result-mode.vent   { color: var(--amber); }
+  .result-mode.direct { color: var(--accent); }
+
+  .result-msg { font-size: 0.95rem; color: var(--muted); text-align: center; line-height: 1.65; margin-bottom: 24px; max-width: 300px; }
+
+  .score-bar-wrap { width: 100%; margin: 20px 0 28px; }
+  .score-bar-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+  .score-bar-track { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .score-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 1s ease 0.3s;
+  }
+  .score-bar-fill.relax  { background: linear-gradient(90deg, #059669, #34d399); }
+  .score-bar-fill.vent   { background: linear-gradient(90deg, #d97706, #fbbf24); }
+  .score-bar-fill.direct { background: linear-gradient(90deg, #2563eb, #5b9cf6); }
+
+  /* ── MODE SCREENS ── */
+  .mode-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 700; text-align: center;
+    margin-bottom: 6px;
+  }
+  .mode-sub { font-size: 0.88rem; color: var(--muted); text-align: center; margin-bottom: 28px; }
+
+  /* RELAXATION */
+  .breath-circle-wrap {
+    position: relative; width: 160px; height: 160px;
+    margin: 0 auto 20px;
+  }
+  .breath-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(52,211,153,0.25);
+    animation: breathe 8s ease-in-out infinite;
+  }
+  .breath-ring:nth-child(2) { animation-delay: 0.5s; transform: scale(0.85); }
+  .breath-ring:nth-child(3) { animation-delay: 1s;   transform: scale(0.65); }
+  .breath-core {
+    position: absolute; inset: 20%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(52,211,153,0.35), rgba(52,211,153,0.05));
+    animation: breathe 8s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { transform: scale(1); opacity: 0.5; }
+    50%      { transform: scale(1.18); opacity: 1; }
+  }
+  .breath-label {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .breath-action {
+    font-size: 0.82rem; color: var(--green); font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    animation: switchText 8s ease-in-out infinite;
+  }
+  @keyframes switchText {
+    0%,45%  { opacity: 1; }
+    50%     { opacity: 0; }
+    55%,100%{ opacity: 1; }
+  }
+  .breath-count { font-size: 2.2rem; font-weight: 700; color: var(--green); }
+
+  .affirmation-card {
+    background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.15);
+    border-radius: 16px; padding: 18px 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-style: italic;
+    color: var(--text); line-height: 1.6;
+    text-align: center; margin-bottom: 24px;
+    width: 100%;
+  }
+
+  /* VENTING */
+  .vent-prompt {
+    font-size: 0.88rem; color: var(--muted);
+    margin-bottom: 14px; text-align: center; line-height: 1.6;
+  }
+  .vent-textarea {
+    width: 100%; min-height: 150px; resize: vertical;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; color: var(--text); line-height: 1.65;
+    outline: none; transition: border-color 0.2s;
+    margin-bottom: 20px;
+  }
+  .vent-textarea:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(251,191,36,0.07); }
+  .vent-textarea::placeholder { color: #3d5068; }
+  .char-count { font-size: 0.75rem; color: var(--muted); text-align: right; margin-top: -14px; margin-bottom: 16px; }
+
+  /* DIRECTION */
+  .step-list { list-style: none; width: 100%; margin-bottom: 24px; }
+  .step-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px 20px;
+    margin-bottom: 10px; display: flex; gap: 16px; align-items: flex-start;
+    transition: all 0.2s;
+  }
+  .step-item:hover { border-color: rgba(91,156,246,0.3); transform: translateX(4px); }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: linear-gradient(135deg, #2563eb, #5b9cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.88rem; color: #fff; flex-shrink: 0;
+  }
+  .step-title { font-weight: 500; font-size: 0.95rem; margin-bottom: 4px; }
+  .step-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  .dir-textarea {
+    width: 100%; height: 80px; resize: none;
+    background: rgba(91,156,246,0.04); border: 1px solid rgba(91,156,246,0.15);
+    border-radius: 12px; padding: 12px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; color: var(--text); outline: none; margin-top: 6px;
+    transition: border-color 0.2s;
+  }
+  .dir-textarea:focus { border-color: var(--accent); }
+  .dir-textarea::placeholder { color: #3d5068; }
+
+  /* ── DIVIDER ── */
+  .divider { width: 40px; height: 2px; background: var(--border); border-radius: 99px; margin: 20px auto; }
+
+  /* ── FOOTER ── */
+  .screen-footer {
+    font-size: 0.75rem; color: #2d3f54; text-align: center;
+    margin-top: 24px;
+  }
+
+  @media (max-height: 680px) {
+    .screen { padding: 24px 20px; justify-content: flex-start; padding-top: 40px; overflow-y: auto; }
+    .orb { width: 70px; height: 70px; }
+    .orb::after { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div id="app"></div>
+
+<script>
+const questions = [
+  "I often feel mentally overwhelmed during the day.",
+  "I find it difficult to stay focused on one task.",
+  "I overthink small situations or conversations.",
+  "I feel anxious without a clear reason.",
+  "I struggle to sleep peacefully at night.",
+  "I feel emotionally drained even without heavy work.",
+  "I avoid sharing my problems with others.",
+  "I feel like I lack direction in life.",
+  "I compare myself to others frequently.",
+  "I feel a lack of motivation to do important tasks.",
+  "I get irritated or angry over small things.",
+  "I feel lonely even when I'm around people.",
+  "I find it hard to relax my mind.",
+  "I feel like I'm not living up to my potential.",
+  "I often feel stuck or confused about what to do next.",
+  "I want guidance but don't know where to start."
+];
+
+let current = 0;
+let answers = [];
+let selectedVal = null;
+let breathTimer = null;
+let breathCount = 0;
+let breathPhase = 'in';
+
+const app = document.getElementById('app');
+
+function render(html) {
+  app.innerHTML = `<div class="screen">${html}</div>`;
+}
+
+/* ══════════════ LANDING ══════════════ */
+function renderLanding() {
+  if (breathTimer) { clearInterval(breathTimer); breathTimer = null; }
+  render(`
+    <div class="orb"></div>
+    <div class="badge">✦ Mental Fitness Assessment</div>
+    <h1 class="landing-title display">Understand Your Mind<br/><em class="italic" style="color:var(--accent2)">in 2 minutes</em></h1>
+    <p class="landing-sub">16 questions. Instant insight.<br/>Your personalised mental mode — just for today.</p>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-num">16</div><div class="stat-label">Questions</div></div>
+      <div class="stat-item"><div class="stat-num">2 min</div><div class="stat-label">Duration</div></div>
+      <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">Modes</div></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;font-size:1.05rem;padding:16px;" onclick="startAssessment()">
+      Start Assessment &nbsp;→
+    </button>
+    <p class="screen-footer">Your data stays on this device. No account needed.</p>
+  `);
+}
+
+/* ══════════════ QUESTIONNAIRE ══════════════ */
+function startAssessment() {
+  current = 0; answers = []; selectedVal = null;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  selectedVal = null;
+  const pct = (current / questions.length) * 100;
+  render(`
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>Question ${current + 1} of ${questions.length}</span>
+        <span style="color:var(--accent)">${Math.round(pct)}%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="pf" style="width:${pct}%"></div></div>
+    </div>
+    <div class="card">
+      <p class="q-number">Q${current + 1} / ${questions.length}</p>
+      <p class="q-text display">${questions[current]}</p>
+      <div class="scale-label">
+        <span>Strongly Disagree</span>
+        <span>Strongly Agree</span>
+      </div>
+      <div class="scale-row" id="scaleRow">
+        ${[1,2,3,4,5].map(n => `<button class="scale-btn" id="sb${n}" onclick="selectVal(${n})">${n}</button>`).join('')}
+      </div>
+      <div class="nav-row">
+        ${current > 0 ? `<button class="btn btn-ghost" onclick="goBack()" style="flex:0 0 auto;padding:14px 20px;">←</button>` : ''}
+        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="${current === 0 ? 'flex:1' : ''}" disabled>
+          ${current < questions.length - 1 ? 'Next →' : 'See Results →'}
+        </button>
+      </div>
+    </div>
+    <p class="screen-footer">1 = Strongly Disagree &nbsp;·&nbsp; 5 = Strongly Agree</p>
+  `);
+  // If returning to an answered Q
+  if (answers[current] !== undefined) {
+    selectVal(answers[current], true);
+  }
+}
+
+function selectVal(val, restore = false) {
+  selectedVal = val;
+  if (!restore) answers[current] = val;
+  document.querySelectorAll('.scale-btn').forEach((b, i) => {
+    b.classList.toggle('selected', i + 1 === val);
+  });
+  const nb = document.getElementById('nextBtn');
+  if (nb) nb.disabled = false;
+}
+
+function nextQuestion() {
+  if (selectedVal === null && answers[current] === undefined) return;
+  if (answers[current] === undefined) answers[current] = selectedVal;
+  current++;
+  if (current < questions.length) {
+    renderQuestion();
+  } else {
+    showLoading();
+  }
+}
+
+function goBack() {
+  if (current > 0) { current--; renderQuestion(); }
+}
+
+/* ══════════════ LOADING ══════════════ */
+function showLoading() {
+  render(`
+    <div class="loader-ring">
+      <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="36" cy="36" r="30" stroke="var(--surface2)" stroke-width="4"/>
+        <path d="M36 6 A30 30 0 0 1 66 36" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/>
+        <defs><linearGradient id="lg" x1="36" y1="6" x2="66" y2="36" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#5b9cf6"/><stop offset="1" stop-color="#a78bfa"/>
+        </linearGradient></defs>
+      </svg>
+    </div>
+    <p class="loader-text display">Analysing your mind<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+    <p class="loader-sub" id="loadMsg">Processing your responses</p>
+  `);
+  const msgs = ['Mapping your mental state', 'Identifying your mode', 'Personalising your experience'];
+  let i = 0;
+  const iv = setInterval(() => {
+    const el = document.getElementById('loadMsg');
+    if (el) el.textContent = msgs[i % msgs.length];
+    i++;
+  }, 800);
+  setTimeout(() => { clearInterval(iv); showResult(); }, 2600);
+}
+
+/* ══════════════ RESULT ══════════════ */
+function showResult() {
+  const total = answers.slice(0, 16).reduce((a, b) => a + b, 0);
+  let mode, cls, emoji, headline, desc, scorePct;
+
+  if (total <= 35) {
+    mode = 'Relaxation Mode'; cls = 'relax'; emoji = '🌿';
+    headline = "You're doing relatively well.";
+    desc = "Your mind is lighter right now. A little calm practice will keep you grounded and recharged.";
+    scorePct = ((total - 16) / (35 - 16)) * 100;
+  } else if (total <= 55) {
+    mode = 'Venting Mode'; cls = 'vent'; emoji = '📝';
+    headline = "You have a lot on your mind.";
+    desc = "Your mind is carrying weight. Writing it out — without filter or judgment — can be the release you need right now.";
+    scorePct = ((total - 36) / (55 - 36)) * 100;
+  } else {
+    mode = 'Direction Mode'; cls = 'direct'; emoji = '🚀';
+    headline = "You need clarity and action.";
+    desc = "Your mind is overwhelmed and seeking structure. A step-by-step focus will help you break through the fog.";
+    scorePct = ((total - 56) / (80 - 56)) * 100;
+  }
+
+  render(`
+    <div class="result-badge ${cls}">${emoji}</div>
+    <p class="result-mode ${cls}">${mode}</p>
+    <p class="result-msg">${headline}<br/>${desc}</p>
+    <div class="score-bar-wrap">
+      <div class="score-bar-label"><span>Stress Level</span><span>Score: ${total}/80</span></div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill ${cls}" id="sbf" style="width:0%"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;font-size:1.05rem;padding:16px;" onclick="enterMode('${cls}')">
+      Enter ${mode} &nbsp;→
+    </button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:0.9rem;" onclick="startAssessment()">
+      Retake Assessment
+    </button>
+  `);
+
+  setTimeout(() => {
+    const el = document.getElementById('sbf');
+    if (el) el.style.width = Math.max(8, scorePct) + '%';
+  }, 100);
+}
+
+/* ══════════════ MODES ══════════════ */
+function enterMode(cls) {
+  if (cls === 'relax')  renderRelax();
+  else if (cls === 'vent') renderVent();
+  else renderDirection();
+}
+
+/* ── RELAXATION ── */
+function renderRelax() {
+  const affirmations = [
+    "You are enough. Right here, right now.",
+    "This moment is safe. Let go of what was.",
+    "Peace lives inside you — let it surface.",
+    "Breathe. You have already survived everything."
+  ];
+  const aff = affirmations[Math.floor(Math.random() * affirmations.length)];
+
+  render(`
+    <p class="mode-header display" style="color:var(--green)">🌿 Relax & Breathe</p>
+    <p class="mode-sub">Follow the circle. Breathe in as it expands, out as it contracts.</p>
+    <div class="breath-circle-wrap">
+      <div class="breath-ring"></div>
+      <div class="breath-ring"></div>
+      <div class="breath-ring"></div>
+      <div class="breath-core"></div>
+      <div class="breath-label">
+        <span class="breath-action" id="bAction">INHALE</span>
+        <span class="breath-count" id="bCount">4</span>
+      </div>
+    </div>
+    <div class="affirmation-card">"${aff}"</div>
+    <button class="btn btn-green" style="width:100%;padding:15px;" onclick="renderLanding()">
+      I feel better &nbsp;✓
+    </button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:0.85rem;padding:11px;" onclick="renderLanding()">
+      ← Back to home
+    </button>
+  `);
+
+  startBreathTimer();
+}
+
+function startBreathTimer() {
+  if (breathTimer) clearInterval(breathTimer);
+  let phase = 'in', count = 4;
+  const phases = { in: { label: 'INHALE', duration: 4 }, hold: { label: 'HOLD', duration: 2 }, out: { label: 'EXHALE', duration: 4 } };
+  const phaseOrder = ['in', 'hold', 'out'];
+  let phaseIdx = 0;
+  count = phases[phase].duration;
+
+  breathTimer = setInterval(() => {
+    const aEl = document.getElementById('bAction');
+    const cEl = document.getElementById('bCount');
+    if (!aEl || !cEl) { clearInterval(breathTimer); return; }
+    count--;
+    if (count <= 0) {
+      phaseIdx = (phaseIdx + 1) % phaseOrder.length;
+      phase = phaseOrder[phaseIdx];
+      count = phases[phase].duration;
+    }
+    if (aEl) aEl.textContent = phases[phase].label;
+    if (cEl) cEl.textContent = count;
+  }, 1000);
+}
+
+/* ── VENTING ── */
+function renderVent() {
+  render(`
+    <p class="mode-header display" style="color:var(--amber)">📝 Let It Out</p>
+    <p class="mode-sub">Write freely. No judgment, no rules. This space is only for you.</p>
+    <textarea class="vent-textarea" id="ventText" placeholder="Whatever is on your mind right now..." oninput="updateCharCount()"></textarea>
+    <p class="char-count" id="charCount">0 words</p>
+    <button class="btn" style="width:100%;padding:15px;background:linear-gradient(135deg,#d97706,#fbbf24);color:#fff;box-shadow:0 4px 20px rgba(251,191,36,0.25)" onclick="releaseVent()">
+      Release &nbsp;✦
+    </button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:0.85rem;padding:11px;" onclick="renderLanding()">
+      ← Back to home
+    </button>
+  `);
+}
+
+function updateCharCount() {
+  const el = document.getElementById('ventText');
+  const cc = document.getElementById('charCount');
+  if (!el || !cc) return;
+  const words = el.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+  cc.textContent = words === 0 ? '0 words' : `${words} word${words > 1 ? 's' : ''}`;
+}
+
+function releaseVent() {
+  const el = document.getElementById('ventText');
+  const text = el ? el.value.trim() : '';
+  render(`
+    <div style="font-size:3rem;margin-bottom:20px;animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both">✨</div>
+    <p class="mode-header display" style="color:var(--amber)">Released.</p>
+    <p style="color:var(--muted);font-size:0.95rem;text-align:center;line-height:1.7;margin-bottom:28px;max-width:280px">
+      ${text.length > 0
+        ? "You've let it out. That took courage. Your feelings are valid."
+        : "Sometimes just opening the space is enough. You showed up."}
+    </p>
+    <div class="card" style="background:rgba(251,191,36,0.04);border-color:rgba(251,191,36,0.15);">
+      <p style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.95rem;color:var(--text);line-height:1.65;text-align:center">
+        "The act of writing is the act of discovering what you believe."
+      </p>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:24px;padding:15px;" onclick="renderLanding()">
+      ← Back to home
+    </button>
+  `);
+}
+
+/* ── DIRECTION ── */
+function renderDirection() {
+  render(`
+    <p class="mode-header display" style="color:var(--accent)">🚀 Get Clarity</p>
+    <p class="mode-sub">Three steps to break through mental fog.</p>
+    <ul class="step-list">
+      <li class="step-item">
+        <div class="step-num">1</div>
+        <div>
+          <p class="step-title">What is bothering you?</p>
+          <p class="step-desc">Name it precisely. Vague worry is the enemy of peace.</p>
+          <textarea class="dir-textarea" placeholder="I'm stressed about..."></textarea>
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-num">2</div>
+        <div>
+          <p class="step-title">What can you actually control?</p>
+          <p class="step-desc">Let go of the rest. Focus only on what is in your hands.</p>
+          <textarea class="dir-textarea" placeholder="I can control..."></textarea>
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-num">3</div>
+        <div>
+          <p class="step-title">One small action — right now</p>
+          <p class="step-desc">Tiny steps break the paralysis. What is the smallest move?</p>
+          <textarea class="dir-textarea" placeholder="My one action today is..."></textarea>
+        </div>
+      </li>
+    </ul>
+    <button class="btn btn-primary" style="width:100%;padding:15px;" onclick="completeDirection()">
+      I have my clarity &nbsp;→
+    </button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:0.85rem;padding:11px;" onclick="renderLanding()">
+      ← Back to home
+    </button>
+  `);
+}
+
+function completeDirection() {
+  render(`
+    <div style="font-size:3rem;margin-bottom:20px;animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both">🎯</div>
+    <p class="mode-header display" style="color:var(--accent)">Clarity Found.</p>
+    <p style="color:var(--muted);font-size:0.95rem;text-align:center;line-height:1.7;margin-bottom:28px;max-width:290px">
+      You now have a direction. Take that one small action — momentum builds from there.
+    </p>
+    <div class="card" style="background:rgba(91,156,246,0.04);border-color:rgba(91,156,246,0.15);">
+      <p style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.95rem;color:var(--text);line-height:1.65;text-align:center">
+        "A small action taken today is worth a hundred plans left for tomorrow."
+      </p>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:24px;padding:15px;" onclick="renderLanding()">
+      ← Back to home
+    </button>
+  `);
+}
+
+/* ══ INIT ══ */
+renderLanding();
+</script>
+</body>
+</html>
